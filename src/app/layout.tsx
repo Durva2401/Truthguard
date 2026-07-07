@@ -3,6 +3,7 @@ import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ThemeProvider from "@/components/ThemeProvider";
+import AuthProvider from "@/components/AuthProvider";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -36,8 +37,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         style={{ backgroundColor: 'var(--surface-page)', color: 'var(--text-primary)' }}
       >
         <ThemeProvider>
-          <Navbar />
-          <main className="pt-16">{children}</main>
+          <AuthProvider>
+            <Navbar />
+            <main className="pt-16">{children}</main>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
