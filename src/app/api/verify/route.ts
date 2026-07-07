@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+// Needs Vercel Pro; on Hobby the hard cap is 10s and you'll still see 504s on slow queries
+export const maxDuration = 60;
+
 import { extractClaims, verifyClaims } from '@/lib/claude';
 import { searchTavily } from '@/lib/tavily';
 import { checkFactCheck } from '@/lib/factcheck';

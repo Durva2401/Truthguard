@@ -1,72 +1,101 @@
 'use client';
 
 import Link from 'next/link';
+import { History, Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const serif = { fontFamily: '"Times New Roman", Times, serif' };
+  const linkCls = "text-[15px] font-[450] tracking-[-0.009em] transition-colors duration-150 " +
+    "text-[#17191c] hover:text-[#4c4c4c] dark:text-[#e8e9eb] dark:hover:text-[#b0b3bb]";
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent border border-white/25">
-      <div className="w-full px-6">
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 border-b border-[#a3a6af]/20 dark:border-[#3a3d42]/60"
+      style={{ backgroundColor: 'var(--surface-nav)' }}
+    >
+      <div className="max-w-[1200px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Left — brand */}
-          <Link
-            href="/"
-            className="text-2xl font-bold text-white tracking-wide"
-            style={serif}
-          >
-            TruthGuard
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-[15px] font-[500] tracking-[-0.009em] text-[#17191c] dark:text-[#e8e9eb]">
+              TruthGuard
+            </span>
           </Link>
 
-          {/* Right — rectangular nav items */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/verify"
-              style={serif}
-              className="px-5 py-2 border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors duration-200"
-            >
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link href="/" className={`${linkCls} px-3 py-1.5 rounded-full`}>
               Verify
             </Link>
-            <Link
-              href="/dashboard"
-              style={serif}
-              className="px-5 py-2 border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors duration-200"
-            >
+            <Link href="/dashboard" className={`${linkCls} px-3 py-1.5 rounded-full flex items-center gap-1.5`}>
+              <History className="h-3.5 w-3.5" />
               History
             </Link>
           </div>
 
-          {/* Mobile toggle */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden text-white"
-          >
-            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Desktop right: sign-in + toggle + CTA */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/dashboard" className={linkCls}>
+              Sign in
+            </Link>
+
+            <ThemeToggle />
+
+            <Link
+              href="/"
+              className="px-5 py-2 rounded-full text-[15px] font-[450] tracking-[-0.009em] transition-colors duration-150
+                         bg-[#17191c] text-white hover:bg-[#2c2f34]
+                         dark:bg-[#e8e9eb] dark:text-[#141618] dark:hover:bg-[#d0d2d6]"
+            >
+              Get started
+            </Link>
+          </div>
+
+          {/* Mobile: toggle + hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="text-[#17191c] dark:text-[#e8e9eb] p-1 transition-colors"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden flex flex-col gap-2 pb-4">
+          <div
+            className="md:hidden border-t border-[#a3a6af]/20 dark:border-[#3a3d42]/60 py-4 space-y-1"
+          >
             <Link
-              href="/verify"
+              href="/"
               onClick={() => setMobileOpen(false)}
-              style={serif}
-              className="px-5 py-2 border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors text-center"
+              className="block text-[15px] text-[#17191c] dark:text-[#e8e9eb] px-3 py-2 rounded-xl font-[450] tracking-[-0.009em]
+                         hover:bg-[#f7f7f8] dark:hover:bg-[#1e2025] transition-colors"
             >
-              Verify
+              Verify Claims
             </Link>
             <Link
               href="/dashboard"
               onClick={() => setMobileOpen(false)}
-              style={serif}
-              className="px-5 py-2 border border-white/40 text-white text-base font-medium hover:bg-white/10 transition-colors text-center"
+              className="flex items-center gap-2 text-[15px] text-[#17191c] dark:text-[#e8e9eb] px-3 py-2 rounded-xl font-[450] tracking-[-0.009em]
+                         hover:bg-[#f7f7f8] dark:hover:bg-[#1e2025] transition-colors"
             >
+              <History className="h-4 w-4" />
               History
+            </Link>
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-[15px] text-[#17191c] dark:text-[#e8e9eb] px-3 py-2 rounded-xl font-[450] tracking-[-0.009em]
+                         hover:bg-[#f7f7f8] dark:hover:bg-[#1e2025] transition-colors"
+            >
+              Sign in
             </Link>
           </div>
         )}

@@ -9,10 +9,11 @@ export async function searchTavily(query: string, maxResults: number = 5): Promi
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         api_key: TAVILY_API_KEY,
         query,
-        search_depth: 'advanced',
+        search_depth: 'basic',
         include_answer: false,
         include_raw_content: false,
         max_results: maxResults,

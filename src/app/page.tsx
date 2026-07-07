@@ -1,167 +1,192 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { ChevronDown, ScanSearch, ShieldCheck, Share2, ArrowRight } from 'lucide-react';
-import { SmokeBackground } from '@/components/ui/spooky-smoke-animation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Zap, Globe, Shield, Lock, UploadCloud, CheckCircle2, FileSearch } from 'lucide-react';
+import InputForm from '@/components/InputForm';
+import LoadingOverlay from '@/components/LoadingOverlay';
+import RecentChecks from '@/components/RecentChecks';
+import type { VerifyResponse } from '@/types';
 
 export default function HomePage() {
-  const exploreRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [isLoading, setIsLoading]     = useState(false);
+  const [currentStep, setCurrentStep] = useState('');
+  const [error, setError]             = useState<string | null>(null);
 
-  // Gently scroll to the next section once, shortly after load —
-  // only if the user hasn't already scrolled themselves.
-  useEffect(() => {
-    let userScrolled = false;
-    const onScroll = () => { userScrolled = true; };
-    window.addEventListener('scroll', onScroll, { passive: true });
+  const handleResult = (result: VerifyResponse) => {
+    sessionStorage.setItem(`result-${result.id}`, JSON.stringify(result));
+    router.push(`/result/${result.id}`);
+  };
 
-    const t = setTimeout(() => {
-      if (!userScrolled) {
-        exploreRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 4000);
+  const features = [
+    { icon: Zap,    title: 'Real-Time',    description: 'Claims verified against live sources in seconds' },
+    { icon: Globe,  title: 'Multi-Source', description: 'Reuters, AP, BBC, Snopes & 100+ fact-checkers' },
+    { icon: Shield, title: 'AI Accuracy',  description: 'Structured reasoning across dozens of evidence points' },
+    { icon: Lock,   title: 'Private',      description: 'Anonymous checks. No tracking, no data selling.' },
+  ];
 
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
+  const steps = [
+    { num: '01', icon: UploadCloud,  title: 'Submit',  desc: 'Paste a URL, text, or upload a screenshot of any claim',
+      bg: 'bg-[#fbe1d1] dark:bg-[#2e1f17]', iconBg: 'bg-white/60 dark:bg-white/10', iconColor: 'text-[#5d2a1a] dark:text-[#c47a5a]' },
+    { num: '02', icon: FileSearch,   title: 'Analyze', desc: 'AI extracts claims, searches live sources, cross-references evidence',
+      bg: 'bg-[#d3e3fc] dark:bg-[#152033]', iconBg: 'bg-white/60 dark:bg-white/10', iconColor: 'text-[#17191c] dark:text-[#e8e9eb]' },
+    { num: '03', icon: CheckCircle2, title: 'Verdict', desc: 'Get a credibility report with sources, confidence score & shareable link',
+      bg: 'bg-[#f7f7f8] dark:bg-[#1e2025]', iconBg: 'bg-white dark:bg-white/10',    iconColor: 'text-[#777b86] dark:text-[#8a8e99]' },
+  ];
 
   return (
-    <>
-      {/* ---------- SECTION 1 — Smoke hero ---------- */}
-      <section className="relative h-screen w-full overflow-hidden">
-        <div className="absolute inset-0">
-          <SmokeBackground smokeColor="#3b82f6" />
-        </div>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-page)' }}>
 
-        <div className="relative z-10 flex h-full items-center justify-center px-4">
-          <h1 className="text-center text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.7)]">
-            Verify Before You Share
-          </h1>
-        </div>
+      {/* ── Hero ── */}
+      <section className="relative px-6 pt-20 pb-24 overflow-hidden">
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[560px] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at top, rgba(251,225,209,0.45) 0%, transparent 68%)' }}
+        />
+        {/* Subtle dark-mode glow */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[560px] pointer-events-none opacity-0 dark:opacity-100"
+          style={{ background: 'radial-gradient(ellipse at top, rgba(196,122,90,0.12) 0%, transparent 68%)' }}
+        />
 
-        {/* Scroll-down indicator */}
-        <button
-          onClick={() => exploreRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-white/70 hover:text-white transition-colors"
-          aria-label="Scroll down"
-        >
-          <ChevronDown className="h-8 w-8 animate-bounce" />
-        </button>
+        <div className="relative max-w-[1200px] mx-auto">
+          {/* Eyebrow */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center mb-8">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[14px] font-[450] tracking-[-0.009em]
+                             border border-[#a3a6af]/40 dark:border-[#3a3d42]/80
+                             bg-white/80 dark:bg-[#1e2025]/80
+                             text-[#777b86] dark:text-[#8a8e99]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5d2a1a] dark:bg-[#c47a5a] flex-shrink-0" />
+              AI-Powered Fact Checking
+            </span>
+          </motion.div>
+
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+            className="font-display text-center text-[44px] md:text-[64px] leading-[1.1] tracking-[-1.6px] mb-5 max-w-3xl mx-auto
+                       text-[#17191c] dark:text-[#e8e9eb]"
+          >
+            Know what&apos;s real
+            <br />before you share.
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
+            className="text-center text-[18px] max-w-lg mx-auto mb-10 leading-[1.4] tracking-[-0.16px]
+                       text-[#4c4c4c] dark:text-[#b0b3bb]"
+          >
+            Paste any news article, social media post, or claim.
+            Our AI verifies it against real sources in seconds.
+          </motion.p>
+
+          {/* Input card */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="max-w-2xl mx-auto"
+          >
+            <AnimatePresence mode="wait">
+              {isLoading
+                ? <LoadingOverlay isLoading={isLoading} currentStep={currentStep} />
+                : <InputForm onResult={handleResult} onLoading={setIsLoading} onStep={setCurrentStep} onError={setError} />
+              }
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="mt-4 rounded-2xl p-4 text-[14px] tracking-[-0.009em]
+                             border border-[#a3a6af]/30 dark:border-[#3a3d42]/60
+                             bg-[#f7f7f8] dark:bg-[#1e2025]
+                             text-[#4c4c4c] dark:text-[#b0b3bb]"
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       </section>
 
-      {/* ---------- SECTION 2 — Microscope ---------- */}
-      <section
-        ref={exploreRef}
-        className="relative min-h-screen w-full overflow-hidden flex items-center justify-center bg-[#09090b]"
-      >
-        {/* Large magnifying glass — left side, upright, head tilting toward center */}
-        <div
-          className="pointer-events-none absolute top-1/2 -left-24 -translate-y-1/2 opacity-[0.18]"
-          style={{ filter: 'drop-shadow(0 0 30px rgba(34,211,238,0.5))' }}
-        >
-          <svg
-            width="560"
-            height="720"
-            viewBox="0 0 200 260"
-            fill="none"
-            stroke="#67e8f9"
-            className="rotate-[20deg]"
-          >
-            {/* outer lens ring — thick */}
-            <circle cx="100" cy="80" r="62" strokeWidth="9" />
-            {/* inner bezel */}
-            <circle cx="100" cy="80" r="50" strokeWidth="2.5" />
-            {/* lens glare arc */}
-            <path d="M64 56 A44 44 0 0 1 116 40" strokeWidth="2.5" strokeLinecap="round" />
-            {/* handle collar */}
-            <path d="M100 142 L100 158" strokeWidth="13" strokeLinecap="round" />
-            {/* thick upright handle */}
-            <path d="M100 158 L100 244" strokeWidth="20" strokeLinecap="round" />
-          </svg>
-        </div>
-
-        {/* Soft ambient glow behind center */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-500/5 blur-3xl rounded-full" />
-
-        {/* Center — objectives */}
-        <div className="relative z-10 w-full px-8 md:px-16 lg:px-24">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">Our Objectives</h2>
-            <p className="text-gray-400 text-lg">What TruthGuard sets out to do</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            {[
-              {
-                icon: ScanSearch,
-                title: 'Detect Misinformation',
-                desc: 'Instantly analyze any news article, post, or forwarded message to flag false and misleading claims.',
-                color: 'text-cyan-400',
-                bg: 'bg-cyan-500/10',
-                border: 'hover:border-cyan-500/30',
-              },
-              {
-                icon: ShieldCheck,
-                title: 'Verify With Real Sources',
-                desc: 'Cross-reference every claim against trusted outlets and fact-checkers — Reuters, AP, BBC, Snopes & more.',
-                color: 'text-blue-400',
-                bg: 'bg-blue-500/10',
-                border: 'hover:border-blue-500/30',
-              },
-              {
-                icon: Share2,
-                title: 'Control the Spread',
-                desc: 'Empower people to know the truth before they share, stopping misinformation at the source.',
-                color: 'text-purple-400',
-                bg: 'bg-purple-500/10',
-                border: 'hover:border-purple-500/30',
-              },
-            ].map((card) => {
-              const Icon = card.icon;
+      {/* ── Feature strip ── */}
+      <section className="px-6 py-16 bg-[#f7f7f8] dark:bg-[#1a1c1f]">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
               return (
-                <div
-                  key={card.title}
-                  className={`rounded-2xl border border-white/12 bg-white/[0.03] backdrop-blur-sm p-12 lg:p-16 min-h-[440px] flex flex-col items-center justify-center text-center transition-all duration-300 hover:bg-white/[0.06] ${card.border}`}
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + index * 0.07 }}
+                  className="rounded-[24px] p-6 bg-white dark:bg-[#1e2025]"
+                  style={{ boxShadow: 'var(--shadow-card-sm)' }}
                 >
-                  <div className={`w-24 h-24 rounded-2xl ${card.bg} flex items-center justify-center mx-auto mb-8`}>
-                    <Icon className={`h-12 w-12 ${card.color}`} />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4
+                                  bg-[#fbe1d1] dark:bg-[#2e1f17]">
+                    <Icon className="h-[18px] w-[18px] text-[#5d2a1a] dark:text-[#c47a5a]" />
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-5">{card.title}</h3>
-                  <p className="text-lg text-gray-300 leading-relaxed">{card.desc}</p>
-                </div>
+                  <h3 className="text-[15px] font-[500] mb-1.5 tracking-[-0.009em]
+                                 text-[#17191c] dark:text-[#e8e9eb]">{feature.title}</h3>
+                  <p className="text-[14px] leading-[1.5] tracking-[-0.009em]
+                                text-[#777b86] dark:text-[#8a8e99]">{feature.description}</p>
+                </motion.div>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* ---------- SECTION 3 — Final CTA box ---------- */}
-      <section className="relative w-full py-24 px-6 bg-[#09090b]">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 via-blue-600/5 to-purple-600/10 p-12 md:p-16 text-center shadow-2xl">
-            {/* glow */}
-            <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-cyan-500/15 blur-3xl rounded-full" />
+      {/* ── How it works ── */}
+      <section className="px-6 py-20" style={{ backgroundColor: 'var(--surface-page)' }}>
+        <div className="max-w-[1200px] mx-auto">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-12">
+            <h2 className="font-display text-[44px] leading-[1.1] tracking-[-0.66px] mb-3
+                           text-[#17191c] dark:text-[#e8e9eb]">
+              How it works
+            </h2>
+            <p className="text-[18px] leading-[1.35] tracking-[-0.16px] text-[#4c4c4c] dark:text-[#b0b3bb]">
+              Three steps from claim to verdict.
+            </p>
+          </motion.div>
 
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
-                Ready to verify the truth?
-              </h2>
-              <p className="text-gray-300 text-base md:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-                Paste any news article, social post, or WhatsApp forward and get an
-                instant credibility verdict backed by real sources.
-              </p>
-              <Link href="/verify">
-                <button className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300">
-                  Start Verifying
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </Link>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {steps.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.num}
+                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: index * 0.1 }}
+                  className={`${item.bg} rounded-[24px] p-6 md:p-8`}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-[13px] font-[500] tracking-[0.06em] text-[#a3a6af] dark:text-[#52565e]">{item.num}</span>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.iconBg}`}
+                         style={{ boxShadow: 'var(--shadow-badge)' }}>
+                      <Icon className={`h-[18px] w-[18px] ${item.iconColor}`} />
+                    </div>
+                  </div>
+                  <h3 className="font-display text-[26px] leading-[1.18] tracking-[-0.23px] mb-3
+                                 text-[#17191c] dark:text-[#e8e9eb]">{item.title}</h3>
+                  <p className="text-[15px] leading-relaxed tracking-[-0.009em]
+                                text-[#4c4c4c] dark:text-[#b0b3bb]">{item.desc}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
-    </>
+
+      {/* ── Recent Checks ── */}
+      <section className="px-6 py-20 bg-[#f7f7f8] dark:bg-[#1a1c1f]">
+        <div className="max-w-[1200px] mx-auto">
+          <RecentChecks />
+        </div>
+      </section>
+    </div>
   );
 }

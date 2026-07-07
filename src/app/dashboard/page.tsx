@@ -2,235 +2,198 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { History, Filter, Search, ArrowRight, Loader2, BarChart3 } from 'lucide-react';
+import { History, Search, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import type { Check, Verdict } from '@/types';
 import { VERDICT_MAP } from '@/types';
+import VerdictIcon from '@/components/VerdictIcon';
 
-const VERDICT_FILTERS: { label: string; value: string }[] = [
-  { label: 'All', value: 'all' },
-  { label: '✅ True', value: 'true' },
-  { label: '❌ False', value: 'false' },
-  { label: '⚠️ Misleading', value: 'misleading' },
-  { label: '🔍 Unverified', value: 'unverified' },
-  { label: '⏳ Too Recent', value: 'too_recent' },
-  { label: '🎭 Satire', value: 'satire' },
+const VERDICT_FILTERS = [
+  { label: 'All',        value: 'all' },
+  { label: 'True',       value: 'true' },
+  { label: 'False',      value: 'false' },
+  { label: 'Misleading', value: 'misleading' },
+  { label: 'Unverified', value: 'unverified' },
+  { label: 'Too Recent', value: 'too_recent' },
+  { label: 'Satire',     value: 'satire' },
 ];
 
 export default function DashboardPage() {
-  const [checks, setChecks] = useState<Check[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [checks, setChecks]             = useState<Check[]>([]);
+  const [loading, setLoading]           = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery]   = useState('');
 
-  useEffect(() => {
-    fetchChecks();
-  }, [activeFilter]);
+  useEffect(() => { fetchChecks(); }, [activeFilter]);
 
   async function fetchChecks() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ limit: '50', offset: '0' });
-      if (activeFilter !== 'all') {
-        params.set('verdict', activeFilter);
-      }
-      const res = await fetch(`/api/history?${params.toString()}`);
+      if (activeFilter !== 'all') params.set('verdict', activeFilter);
+      const res  = await fetch(`/api/history?${params.toString()}`);
       const data = await res.json();
       setChecks(data.checks || []);
-    } catch {
-      setChecks([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setChecks([]); } finally { setLoading(false); }
   }
 
   const filteredChecks = searchQuery
-    ? checks.filter((c) =>
-        c.raw_input.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.summary?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? checks.filter((c) => c.raw_input.toLowerCase().includes(searchQuery.toLowerCase()))
     : checks;
 
-  // Stats
-  const stats = {
-    total: checks.length,
-    true: checks.filter((c) => c.verdict === 'true').length,
-    false: checks.filter((c) => c.verdict === 'false').length,
-    misleading: checks.filter((c) => c.verdict === 'misleading').length,
-  };
+  const verdictCounts = checks.reduce((acc, c) => {
+    acc[c.verdict] = (acc[c.verdict] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
-    <div className="min-h-screen px-4 py-8 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-cyan-500/10">
-              <History className="h-6 w-6 text-cyan-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-white">Verification History</h1>
+    <div className="min-h-screen px-6 py-12 pt-24" style={{ backgroundColor: 'var(--surface-section)' }}>
+      <div className="max-w-[1200px] mx-auto">
+
+        {/* ── Header ── */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+          <div className="flex items-center gap-2 mb-2">
+            <History className="h-4 w-4 text-[#777b86] dark:text-[#8a8e99]" />
+            <p className="text-[12px] font-[500] tracking-[0.06em] uppercase text-[#777b86] dark:text-[#8a8e99]">History</p>
           </div>
-          <p className="text-gray-500 ml-14">
-            Browse all past fact-checks and their verdicts
+          <h1 className="font-display text-[44px] leading-[1.1] tracking-[-0.66px] mb-2
+                         text-[#17191c] dark:text-[#e8e9eb]">
+            Verified Claims
+          </h1>
+          <p className="text-[18px] leading-[1.35] tracking-[-0.16px] text-[#4c4c4c] dark:text-[#b0b3bb]">
+            {checks.length} {checks.length === 1 ? 'check' : 'checks'} on record
           </p>
         </motion.div>
 
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"
-        >
-          {[
-            { label: 'Total Checks', value: stats.total, icon: BarChart3, color: 'text-cyan-400' },
-            { label: 'Verified True', value: stats.true, icon: () => <span>✅</span>, color: 'text-emerald-400' },
-            { label: 'Debunked', value: stats.false, icon: () => <span>❌</span>, color: 'text-red-400' },
-            { label: 'Misleading', value: stats.misleading, icon: () => <span>⚠️</span>, color: 'text-amber-400' },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="p-4 rounded-xl bg-white/5 border border-white/5"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
-                  <span className="text-xs text-gray-500">{stat.label}</span>
-                </div>
-                <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
-              </div>
-            );
-          })}
-        </motion.div>
+        {/* ── Stat cards ── */}
+        {checks.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {Object.entries(verdictCounts).slice(0, 4).map(([v, count]) => {
+              const display   = VERDICT_MAP[v as Verdict] || VERDICT_MAP.unverified;
+              const isWarm    = ['false', 'misleading'].includes(v);
+              const isCool    = ['true', 'too_recent'].includes(v);
+              const cardBg    = isWarm ? 'bg-[#fbe1d1] dark:bg-[#2e1f17]' : isCool ? 'bg-[#d3e3fc] dark:bg-[#152033]' : 'bg-white dark:bg-[#1e2025]';
+              const iconColor = isWarm ? 'text-[#5d2a1a] dark:text-[#c47a5a]' : isCool ? 'text-[#17191c] dark:text-[#e8e9eb]' : 'text-[#777b86] dark:text-[#8a8e99]';
 
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-6 space-y-4"
-        >
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              id="dashboard-search"
-              placeholder="Search claims..."
+              return (
+                <div key={v} className={`rounded-[24px] p-5 ${cardBg}`} style={{ boxShadow: 'var(--shadow-card-flat)' }}>
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-[28px] font-[500] leading-none tracking-[-0.5px] text-[#17191c] dark:text-[#e8e9eb]">{count}</p>
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/70 dark:bg-white/10"
+                         style={{ boxShadow: 'var(--shadow-badge)' }}>
+                      <VerdictIcon iconName={display.iconName} className={`w-4 h-4 ${iconColor}`} />
+                    </div>
+                  </div>
+                  <p className={`text-[13px] font-[500] tracking-[-0.009em] ${iconColor}`}>{display.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Search + Filters ── */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a3a6af] dark:text-[#52565e]" />
+            <input
+              type="text"
+              placeholder="Search checks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 rounded-xl"
+              className="w-full h-11 pl-10 pr-4 rounded-full text-[15px] tracking-[-0.009em] focus:outline-none transition-colors
+                         border border-[#a3a6af]/40 dark:border-[#3a3d42]/70
+                         bg-white dark:bg-[#1e2025]
+                         text-[#17191c] dark:text-[#e8e9eb]
+                         placeholder:text-[#a3a6af] dark:placeholder:text-[#52565e]
+                         focus:border-[#17191c] dark:focus:border-[#8a8e99]"
             />
           </div>
-
-          {/* Filter chips */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="h-4 w-4 text-gray-500 flex-shrink-0" />
-            {VERDICT_FILTERS.map((filter) => (
+          <div className="flex gap-2 flex-wrap">
+            {VERDICT_FILTERS.map((f) => (
               <button
-                key={filter.value}
-                onClick={() => setActiveFilter(filter.value)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-300 ${
-                  activeFilter === filter.value
-                    ? 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
-                    : 'bg-white/5 border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
+                key={f.value}
+                onClick={() => setActiveFilter(f.value)}
+                className={`px-4 py-2 rounded-full text-[13px] font-[450] tracking-[-0.009em] transition-colors ${
+                  activeFilter === f.value
+                    ? 'bg-[#17191c] dark:bg-[#e8e9eb] text-white dark:text-[#141618]'
+                    : 'bg-white dark:bg-[#1e2025] text-[#777b86] dark:text-[#8a8e99] border border-[#a3a6af]/40 dark:border-[#3a3d42]/70 hover:border-[#17191c] dark:hover:border-[#8a8e99] hover:text-[#17191c] dark:hover:text-[#e8e9eb]'
                 }`}
               >
-                {filter.label}
+                {f.label}
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Results Table */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />
-              ))}
-            </div>
-          ) : filteredChecks.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-5xl mb-4">📭</div>
-              <h3 className="text-xl font-semibold text-white mb-2">No checks found</h3>
-              <p className="text-gray-500 mb-6">
-                {searchQuery
-                  ? 'No results match your search. Try different keywords.'
-                  : 'Start verifying claims to see your history here.'}
-              </p>
-              <Link href="/">
-                <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl">
-                  Verify a Claim
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredChecks.map((check, index) => {
-                const display = VERDICT_MAP[check.verdict as Verdict] || VERDICT_MAP.unverified;
+        {/* ── List ── */}
+        {loading ? (
+          <div className="space-y-3">
+            {[1,2,3,4,5].map((i) => (
+              <div key={i} className="h-20 rounded-[24px] animate-pulse bg-white dark:bg-[#1e2025]"
+                   style={{ boxShadow: 'var(--shadow-card-flat)' }} />
+            ))}
+          </div>
+        ) : filteredChecks.length === 0 ? (
+          <div className="rounded-[24px] p-16 text-center bg-white dark:bg-[#1e2025]"
+               style={{ boxShadow: 'var(--shadow-card-flat)' }}>
+            <Search className="h-8 w-8 mx-auto mb-3 text-[#a3a6af] dark:text-[#52565e]" />
+            <p className="text-[16px] tracking-[-0.009em] text-[#777b86] dark:text-[#8a8e99]">
+              {searchQuery ? 'No matching checks found.' : 'No checks yet.'}
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-full text-[15px] font-[450] tracking-[-0.009em] transition-colors
+                         bg-[#17191c] dark:bg-[#e8e9eb] text-white dark:text-[#141618]
+                         hover:bg-[#2c2f34] dark:hover:bg-[#d0d2d6]"
+            >
+              Verify a claim
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredChecks.map((check, index) => {
+              const display   = VERDICT_MAP[check.verdict as Verdict] || VERDICT_MAP.unverified;
+              const isWarm    = ['false', 'misleading'].includes(check.verdict);
+              const isCool    = ['true', 'too_recent'].includes(check.verdict);
+              const cardBg    = isWarm ? 'bg-[#fbe1d1] dark:bg-[#2e1f17]' : isCool ? 'bg-[#d3e3fc] dark:bg-[#152033]' : 'bg-white dark:bg-[#1e2025]';
+              const iconColor = isWarm ? 'text-[#5d2a1a] dark:text-[#c47a5a]' : isCool ? 'text-[#17191c] dark:text-[#e8e9eb]' : 'text-[#777b86] dark:text-[#8a8e99]';
 
-                return (
-                  <motion.div
-                    key={check.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
+              return (
+                <motion.div
+                  key={check.id}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                >
+                  <Link
+                    href={`/result/${check.id}`}
+                    className={`group flex items-center gap-4 p-5 rounded-[24px] ${cardBg} transition-all hover:shadow-md`}
+                    style={{ boxShadow: 'var(--shadow-card-flat)' }}
                   >
-                    <Link
-                      href={`/result/${check.id}`}
-                      className="group flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 hover:bg-white/[0.07] transition-all duration-300"
-                    >
-                      {/* Verdict icon */}
-                      <span className="text-2xl flex-shrink-0">{display.icon}</span>
+                    <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-white/70 dark:bg-white/10"
+                         style={{ boxShadow: 'var(--shadow-badge)' }}>
+                      <VerdictIcon iconName={display.iconName} className={`w-4 h-4 ${iconColor}`} />
+                    </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-200 truncate mb-1">
-                          {check.raw_input.substring(0, 150)}
-                        </p>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${display.bgColor} ${display.color} border ${display.borderColor}`}>
-                            {display.label}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {check.confidence_score}% confidence
-                          </span>
-                          <span className="text-xs text-gray-600">
-                            {new Date(check.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          <span className="text-xs text-gray-600 hidden sm:inline">
-                            {check.sources?.length || 0} sources
-                          </span>
-                        </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-[450] tracking-[-0.009em] truncate text-[#17191c] dark:text-[#e8e9eb]">
+                        {check.raw_input.substring(0, 100)}{check.raw_input.length > 100 && '…'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[13px] font-[500] tracking-[-0.009em] ${iconColor}`}>{display.label}</span>
+                        <span className="text-[13px] text-[#a3a6af] dark:text-[#52565e]">·</span>
+                        <span className="text-[13px] tracking-[-0.009em] text-[#a3a6af] dark:text-[#52565e]">
+                          {new Date(check.created_at).toLocaleDateString()}
+                        </span>
                       </div>
+                    </div>
 
-                      {/* Arrow */}
-                      <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-white transition-colors flex-shrink-0" />
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
+                    <ArrowRight className="h-4 w-4 flex-shrink-0 transition-colors text-[#a3a6af] dark:text-[#52565e] group-hover:text-[#17191c] dark:group-hover:text-[#e8e9eb]" />
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

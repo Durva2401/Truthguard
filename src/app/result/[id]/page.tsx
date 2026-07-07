@@ -3,95 +3,83 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Search, Newspaper } from 'lucide-react';
+import { ArrowLeft, FileText, Newspaper, Search, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import VerdictCard from '@/components/VerdictCard';
 import SourceList from '@/components/SourceList';
 import ShareCard from '@/components/ShareCard';
 import type { VerifyResponse, ExtractedClaim } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import FallingSymbolsBackground from '@/components/ui/falling-symbols-background';
-
-// Shared background used on the verification page, continued here
-function ResultBackground() {
-  return (
-    <div className="fixed inset-0 -z-10">
-      <FallingSymbolsBackground
-        symbols="01░▒▓█▌▐?!#✓✗"
-        symbolColors={[
-          'rgba(34,211,238,0.55)',
-          'rgba(59,130,246,0.4)',
-          'rgba(255,255,255,0.3)',
-        ]}
-        backgroundColor="#080A12"
-        fallSpeed={0.6}
-      />
-    </div>
-  );
-}
-
-// Reusable opaque liquid-glass surface (solid enough to sit over the animated bg)
-const glass =
-  'rounded-3xl bg-[#0d1018]/90 backdrop-blur-2xl border border-white/20 shadow-[0_8px_36px_rgba(0,0,0,0.6)] ring-1 ring-white/5';
 
 export default function ResultPage() {
   const params = useParams();
-  const id = params.id as string;
-  const [result, setResult] = useState<VerifyResponse | null>(null);
+  const id     = params.id as string;
+  const [result, setResult]   = useState<VerifyResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const cached = sessionStorage.getItem(`result-${id}`);
-    if (cached) {
-      setResult(JSON.parse(cached));
-      setLoading(false);
-      return;
-    }
+    if (cached) { setResult(JSON.parse(cached)); setLoading(false); return; }
     async function fetchResult() {
       try {
-        const res = await fetch(`/api/history?limit=20&offset=0`);
+        const res  = await fetch(`/api/history?limit=20&offset=0`);
         const data = await res.json();
         const check = data.checks?.find((c: VerifyResponse) => c.id === id);
         if (check) setResult(check);
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
+      } catch { /* empty */ } finally { setLoading(false); }
     }
     fetchResult();
   }, [id]);
 
+  /* ── Skeleton ── */
   if (loading) {
     return (
-      <div className="min-h-screen px-4 py-12 pt-28">
-        <ResultBackground />
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-6 w-32 bg-white/10" />
-          <Skeleton className="h-20 w-full rounded-3xl bg-white/10" />
-          <Skeleton className="h-96 w-full rounded-3xl bg-white/10" />
-          <div className="grid md:grid-cols-2 gap-6">
-            <Skeleton className="h-52 w-full rounded-3xl bg-white/10" />
-            <Skeleton className="h-52 w-full rounded-3xl bg-white/10" />
+      <div className="min-h-screen px-6 pt-24 pb-16" style={{ backgroundColor: 'var(--surface-section)' }}>
+        <div className="max-w-[1200px] mx-auto space-y-6">
+          <div className="h-5 w-28 rounded-full animate-pulse bg-[#a3a6af]/20 dark:bg-[#3a3d42]/40" />
+          <div className="h-14 w-64 rounded-2xl animate-pulse bg-[#a3a6af]/15 dark:bg-[#3a3d42]/30" />
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 space-y-4">
+              {[72, 48].map((h) => (
+                <div key={h} className={`h-${h} rounded-[24px] animate-pulse bg-white dark:bg-[#1e2025]`}
+                     style={{ boxShadow: 'var(--shadow-card-flat)', height: `${h * 4}px` }} />
+              ))}
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              {[64, 32].map((h) => (
+                <div key={h} className="rounded-[24px] animate-pulse bg-white dark:bg-[#1e2025]"
+                     style={{ boxShadow: 'var(--shadow-card-flat)', height: `${h * 4}px` }} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  /* ── Not found ── */
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <ResultBackground />
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: 'var(--surface-section)' }}>
         <div className="text-center">
-          <div className="text-7xl mb-4">🔍</div>
-          <h1 className="text-3xl font-bold text-white mb-2">Result Not Found</h1>
-          <p className="text-gray-300 mb-6 text-lg">This verification result may have expired or doesn&apos;t exist.</p>
-          <Link href="/verify">
-            <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl h-12 px-6 text-base">
-              Check Another Claim
-            </Button>
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center
+                          bg-white dark:bg-[#1e2025]"
+               style={{ boxShadow: 'var(--shadow-card-flat)' }}>
+            <HelpCircle className="h-8 w-8 text-[#a3a6af] dark:text-[#52565e]" />
+          </div>
+          <h1 className="font-display text-[44px] leading-[1.1] tracking-[-0.66px] mb-3
+                         text-[#17191c] dark:text-[#e8e9eb]">
+            Result Not Found
+          </h1>
+          <p className="text-[16px] tracking-[-0.009em] mb-8 text-[#777b86] dark:text-[#8a8e99]">
+            This verification result may have expired or doesn&apos;t exist.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[15px] font-[450] tracking-[-0.009em] transition-colors
+                       bg-[#17191c] dark:bg-[#e8e9eb] text-white dark:text-[#141618]
+                       hover:bg-[#2c2f34] dark:hover:bg-[#d0d2d6]"
+          >
+            Check Another Claim
           </Link>
         </div>
       </div>
@@ -99,139 +87,151 @@ export default function ResultPage() {
   }
 
   const rawInput = (result as VerifyResponse & { raw_input?: string }).raw_input;
-  const hasClaims = result.extracted_claims && result.extracted_claims.length > 0;
-  const hasSources = result.sources && result.sources.length > 0;
-
-  // Consistent section header
-  const SectionTitle = ({ icon: Icon, color, children, meta }: {
-    icon: typeof Search; color: string; children: React.ReactNode; meta?: string;
-  }) => (
-    <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-white/10">
-      <Icon className={`h-5 w-5 ${color}`} />
-      <h2 className="text-xl font-bold text-white">{children}</h2>
-      {meta && <span className="ml-auto text-sm text-white/60 font-medium">{meta}</span>}
-    </div>
-  );
 
   return (
-    <div className="min-h-screen px-4 py-10 pt-28">
-      <ResultBackground />
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen px-6 pt-24 pb-16" style={{ backgroundColor: 'var(--surface-section)' }}>
+      <div className="max-w-[1200px] mx-auto">
 
-        {/* Back */}
-        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-          <Link href="/verify" className="inline-flex items-center gap-2 text-base text-gray-200 hover:text-white transition-colors group">
-            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-0.5 transition-transform" />
-            Back to Verify
+        {/* ── Back ── */}
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[14px] font-[450] tracking-[-0.009em] transition-colors
+                       text-[#777b86] dark:text-[#8a8e99] hover:text-[#17191c] dark:hover:text-[#e8e9eb]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
           </Link>
         </motion.div>
 
-        {/* 1 — Verified claim banner */}
+        {/* ── Claim banner ── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-6 ${glass} flex items-start gap-4`}
+          className="mb-6 rounded-[24px] p-5 flex items-start gap-4
+                     bg-white dark:bg-[#1e2025]"
+          style={{ boxShadow: 'var(--shadow-card-flat)' }}
         >
-          <div className="p-2.5 rounded-xl bg-white/20 flex-shrink-0 mt-0.5">
-            <FileText className="h-5 w-5 text-white" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5
+                          bg-[#f7f7f8] dark:bg-[#222429]">
+            <FileText className="h-4 w-4 text-[#777b86] dark:text-[#8a8e99]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-white/70 uppercase tracking-widest font-bold mb-1.5">Verified Claim</p>
-            <p className="text-lg text-white leading-relaxed">
+            <p className="text-[12px] font-[500] tracking-[0.06em] uppercase mb-1.5
+                          text-[#a3a6af] dark:text-[#52565e]">
+              Verified Claim
+            </p>
+            <p className="text-[15px] leading-relaxed tracking-[-0.009em] line-clamp-3
+                          text-[#17191c] dark:text-[#e8e9eb]">
               {rawInput || result.extracted_claims?.[0]?.claim || 'Original claim text'}
             </p>
           </div>
         </motion.div>
 
-        {/* 2 — Verdict (hero, centered) */}
-        <VerdictCard
-          verdict={result.verdict}
-          confidence={result.confidence_score}
-          summary={result.summary}
-        />
+        {/* ── Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        {/* 3 — Claims + Sources stacked full width */}
-        <div className="space-y-8">
-          {/* Extracted Claims */}
-          {hasClaims && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className={`${glass} p-7`}
-            >
-              <SectionTitle icon={Search} color="text-cyan-200" meta={`${result.extracted_claims.length} found`}>
-                Extracted Claims
-              </SectionTitle>
-              <div className="space-y-3">
-                {result.extracted_claims.map((claim: ExtractedClaim, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/15 hover:bg-white/[0.12] transition-colors"
-                  >
-                    <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold flex-shrink-0 mt-0.5 uppercase tracking-wide ${
-                      claim.importance === 'high'
-                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                        : claim.importance === 'medium'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-gray-500/20 text-gray-200 border border-gray-500/30'
-                    }`}>
-                      {claim.importance}
-                    </span>
-                    <p className="text-base text-white leading-relaxed">{claim.claim}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+          {/* LEFT */}
+          <div className="lg:col-span-3 space-y-5">
+            <VerdictCard verdict={result.verdict} confidence={result.confidence_score} summary={result.summary} />
 
-          {/* Evidence & Sources */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className={`${glass} p-7`}
-          >
-            <SectionTitle icon={Newspaper} color="text-blue-200">
-              Evidence &amp; Sources
-            </SectionTitle>
-            {hasSources ? (
-              <SourceList sources={result.sources} />
-            ) : (
-              <div className="py-8 text-center">
-                <Newspaper className="h-9 w-9 text-gray-300 mx-auto mb-3" />
-                <p className="text-base text-gray-200">No sources were found for this claim</p>
-              </div>
+            {/* Extracted Claims */}
+            {result.extracted_claims && result.extracted_claims.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                className="rounded-[24px] p-6 bg-white dark:bg-[#1e2025]"
+                style={{ boxShadow: 'var(--shadow-card-sm)' }}
+              >
+                <div className="flex items-center gap-2 mb-5">
+                  <Search className="h-4 w-4 text-[#777b86] dark:text-[#8a8e99]" />
+                  <h2 className="text-[15px] font-[500] tracking-[-0.009em] text-[#17191c] dark:text-[#e8e9eb]">
+                    Extracted Claims
+                  </h2>
+                  <span className="ml-auto text-[13px] tracking-[-0.009em] text-[#a3a6af] dark:text-[#52565e]">
+                    {result.extracted_claims.length} found
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {result.extracted_claims.map((claim: ExtractedClaim, index: number) => (
+                    <div key={index} className="flex items-start gap-3 p-4 rounded-2xl
+                                                bg-[#f7f7f8] dark:bg-[#222429]">
+                      <span className={`inline-block text-[11px] px-2.5 py-1 rounded-full font-[500] flex-shrink-0 mt-0.5 uppercase tracking-wider ${
+                        claim.importance === 'high'
+                          ? 'bg-[#fbe1d1] dark:bg-[#2e1f17] text-[#5d2a1a] dark:text-[#c47a5a]'
+                          : claim.importance === 'medium'
+                          ? 'bg-[#d3e3fc] dark:bg-[#152033] text-[#17191c] dark:text-[#e8e9eb]'
+                          : 'bg-white dark:bg-[#1e2025] text-[#777b86] dark:text-[#8a8e99] border border-[#a3a6af]/30 dark:border-[#3a3d42]/60'
+                      }`}>
+                        {claim.importance}
+                      </span>
+                      <p className="text-[14px] leading-relaxed tracking-[-0.009em]
+                                    text-[#17191c] dark:text-[#e8e9eb]">
+                        {claim.claim}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
             )}
-          </motion.div>
-        </div>
 
-        {/* 4 — Share (full width) */}
-        <ShareCard
-          verdict={result.verdict}
-          confidence={result.confidence_score}
-          summary={result.summary}
-          checkId={id}
-        />
-
-        {/* 5 — Full-width CTA banner */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-3xl border border-white/20 bg-[#0d1018]/90 ring-1 ring-white/5 backdrop-blur-2xl p-10 md:p-12 flex flex-col items-center justify-center gap-6 text-center shadow-[0_8px_36px_rgba(0,0,0,0.6)]"
-        >
-          <div>
-            <p className="text-2xl md:text-3xl font-bold text-white mb-2">Want to verify another claim?</p>
-            <p className="text-base text-gray-200">Paste a claim, URL, or screenshot and get an instant verdict.</p>
+            <ShareCard
+              verdict={result.verdict}
+              confidence={result.confidence_score}
+              summary={result.summary}
+              checkId={id}
+            />
           </div>
-          <Link href="/verify">
-            <Button className="h-14 px-12 text-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300">
-              Check Another Claim
-            </Button>
-          </Link>
-        </motion.div>
 
+          {/* RIGHT */}
+          <div className="lg:col-span-2 space-y-5">
+            {result.sources && result.sources.length > 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                className="rounded-[24px] p-6 bg-white dark:bg-[#1e2025]"
+                style={{ boxShadow: 'var(--shadow-card-sm)' }}
+              >
+                <div className="flex items-center gap-2 mb-5">
+                  <Newspaper className="h-4 w-4 text-[#777b86] dark:text-[#8a8e99]" />
+                  <h2 className="text-[15px] font-[500] tracking-[-0.009em] text-[#17191c] dark:text-[#e8e9eb]">
+                    Evidence & Sources
+                  </h2>
+                </div>
+                <SourceList sources={result.sources} />
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+                className="rounded-[24px] p-10 text-center bg-white dark:bg-[#1e2025]"
+                style={{ boxShadow: 'var(--shadow-card-flat)' }}
+              >
+                <Newspaper className="h-8 w-8 mx-auto mb-3 text-[#a3a6af] dark:text-[#52565e]" />
+                <p className="text-[14px] tracking-[-0.009em] text-[#777b86] dark:text-[#8a8e99]">
+                  No sources were found for this claim
+                </p>
+              </motion.div>
+            )}
+
+            {/* CTA card */}
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+              className="rounded-[24px] p-6 bg-[#fbe1d1] dark:bg-[#2e1f17]"
+              style={{ boxShadow: 'var(--shadow-card-flat)' }}
+            >
+              <p className="text-[15px] font-[450] tracking-[-0.009em] mb-4
+                            text-[#5d2a1a] dark:text-[#c47a5a]">
+                Want to verify another claim?
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center w-full px-5 py-2.5 rounded-full text-[15px] font-[450] tracking-[-0.009em] transition-colors
+                           bg-[#17191c] dark:bg-[#e8e9eb] text-white dark:text-[#141618]
+                           hover:bg-[#2c2f34] dark:hover:bg-[#d0d2d6]"
+              >
+                Check Another Claim
+              </Link>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

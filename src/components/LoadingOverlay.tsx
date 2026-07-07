@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, FileText, Brain, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, FileText, Brain, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface LoadingOverlayProps {
   isLoading: boolean;
@@ -9,10 +9,10 @@ interface LoadingOverlayProps {
 }
 
 const steps = [
-  { key: 'Extracting claims...', icon: FileText, label: 'Extracting Claims' },
-  { key: 'Searching sources...', icon: Search, label: 'Searching Sources' },
-  { key: 'Analyzing evidence...', icon: Brain, label: 'Analyzing Evidence' },
-  { key: 'Generating verdict...', icon: CheckCircle, label: 'Generating Verdict' },
+  { key: 'Extracting claims...',  icon: FileText,      label: 'Extracting Claims' },
+  { key: 'Searching sources...',  icon: Search,        label: 'Searching Sources' },
+  { key: 'Analyzing evidence...', icon: Brain,         label: 'Analyzing Evidence' },
+  { key: 'Generating verdict...',  icon: CheckCircle2, label: 'Generating Verdict' },
 ];
 
 export default function LoadingOverlay({ isLoading, currentStep }: LoadingOverlayProps) {
@@ -22,94 +22,59 @@ export default function LoadingOverlay({ isLoading, currentStep }: LoadingOverla
     <AnimatePresence>
       {isLoading && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="w-full max-w-md mx-auto"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+          className="w-full"
         >
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-purple-500/5 rounded-2xl blur-xl" />
-            <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-              {/* Animated brain icon */}
-              <div className="flex justify-center mb-6">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                  className="relative"
-                >
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 flex items-center justify-center border border-white/10">
-                    <Loader2 className="h-8 w-8 text-cyan-400 animate-spin" />
-                  </div>
-                  {/* Orbital ring */}
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                    className="absolute inset-[-8px] border border-dashed border-cyan-500/20 rounded-full"
-                  />
-                </motion.div>
+          <div className="rounded-[24px] p-8 bg-white dark:bg-[#1e2025]" style={{ boxShadow: 'var(--shadow-card)' }}>
+
+            <div className="flex justify-center mb-8">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#f7f7f8] dark:bg-[#222429]">
+                <Loader2 className="h-5 w-5 animate-spin text-[#17191c] dark:text-[#e8e9eb]" />
               </div>
-
-              {/* Steps */}
-              <div className="space-y-3">
-                {steps.map((step, index) => {
-                  const Icon = step.icon;
-                  const isActive = index === currentIndex;
-                  const isCompleted = index < currentIndex;
-
-                  return (
-                    <motion.div
-                      key={step.key}
-                      initial={{ opacity: 0.3 }}
-                      animate={{
-                        opacity: isActive ? 1 : isCompleted ? 0.7 : 0.3,
-                      }}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-500 ${
-                        isActive
-                          ? 'bg-white/10 border border-white/10'
-                          : isCompleted
-                          ? 'bg-white/5'
-                          : ''
-                      }`}
-                    >
-                      <div className={`flex-shrink-0 ${
-                        isActive ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-gray-600'
-                      }`}>
-                        {isCompleted ? (
-                          <CheckCircle className="h-5 w-5" />
-                        ) : isActive ? (
-                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }}>
-                            <Icon className="h-5 w-5" />
-                          </motion.div>
-                        ) : (
-                          <Icon className="h-5 w-5" />
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium ${
-                        isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {step.label}
-                      </span>
-                      {isActive && (
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: '100%' }}
-                          transition={{ duration: 3 }}
-                          className="ml-auto h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full max-w-[60px]"
-                        />
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <motion.p
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-center text-xs text-gray-500 mt-4"
-              >
-                This may take 10-30 seconds depending on the claim
-              </motion.p>
             </div>
+
+            <div className="space-y-1">
+              {steps.map((step, index) => {
+                const Icon        = step.icon;
+                const isActive    = index === currentIndex;
+                const isCompleted = index < currentIndex;
+
+                return (
+                  <motion.div
+                    key={step.key}
+                    animate={{ opacity: isActive ? 1 : isCompleted ? 0.55 : 0.25 }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
+                      isActive ? 'bg-[#f7f7f8] dark:bg-[#222429]' : ''
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 ${
+                      isCompleted ? 'text-[#5d2a1a] dark:text-[#c47a5a]'
+                      : isActive  ? 'text-[#17191c] dark:text-[#e8e9eb]'
+                                  : 'text-[#a3a6af] dark:text-[#52565e]'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                    </div>
+                    <span className={`text-[14px] tracking-[-0.009em] ${
+                      isActive
+                        ? 'text-[#17191c] dark:text-[#e8e9eb] font-[500]'
+                        : isCompleted
+                        ? 'text-[#4c4c4c] dark:text-[#b0b3bb] font-[450]'
+                        : 'text-[#a3a6af] dark:text-[#52565e] font-[450]'
+                    }`}>
+                      {step.label}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            <motion.p
+              animate={{ opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-center text-[13px] tracking-[-0.009em] mt-6 text-[#a3a6af] dark:text-[#52565e]"
+            >
+              This may take 10–30 seconds
+            </motion.p>
           </div>
         </motion.div>
       )}

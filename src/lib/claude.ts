@@ -30,6 +30,7 @@ async function groqChat(
       'Authorization': `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(25000),
   });
 
   if (!response.ok) {
@@ -194,6 +195,7 @@ export async function extractTextFromImage(imageBase64: string): Promise<string>
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${GROQ_API_KEY}`,
       },
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         max_tokens: 1024,

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import type { Verdict } from '@/types';
 import { VERDICT_MAP } from '@/types';
 import ConfidenceMeter from './ConfidenceMeter';
+import VerdictIcon from './VerdictIcon';
 import { AlertTriangle } from 'lucide-react';
 
 interface VerdictCardProps {
@@ -12,104 +13,72 @@ interface VerdictCardProps {
   summary: string;
 }
 
+const verdictStyles: Record<string, {
+  bg: string; textColor: string; iconBg: string; divider: string;
+}> = {
+  true:       { bg: 'bg-[#d3e3fc] dark:bg-[#152033]',    textColor: 'text-[#17191c] dark:text-[#e8e9eb]', iconBg: 'bg-white/60 dark:bg-white/10', divider: 'bg-[#17191c]/10 dark:bg-white/10' },
+  mostly_true:{ bg: 'bg-[#d3e3fc] dark:bg-[#152033]',    textColor: 'text-[#17191c] dark:text-[#e8e9eb]', iconBg: 'bg-white/60 dark:bg-white/10', divider: 'bg-[#17191c]/10 dark:bg-white/10' },
+  misleading: { bg: 'bg-[#fbe1d1] dark:bg-[#2e1f17]',    textColor: 'text-[#5d2a1a] dark:text-[#c47a5a]', iconBg: 'bg-white/60 dark:bg-white/10', divider: 'bg-[#5d2a1a]/15 dark:bg-white/10' },
+  false:      { bg: 'bg-[#fbe1d1] dark:bg-[#2e1f17]',    textColor: 'text-[#5d2a1a] dark:text-[#c47a5a]', iconBg: 'bg-white/60 dark:bg-white/10', divider: 'bg-[#5d2a1a]/15 dark:bg-white/10' },
+  unverified: { bg: 'bg-[#f7f7f8] dark:bg-[#1e2025]',    textColor: 'text-[#777b86] dark:text-[#8a8e99]', iconBg: 'bg-white dark:bg-white/10',    divider: 'bg-[#a3a6af]/20 dark:bg-white/08' },
+  too_recent: { bg: 'bg-[#d3e3fc] dark:bg-[#152033]',    textColor: 'text-[#17191c] dark:text-[#e8e9eb]', iconBg: 'bg-white/60 dark:bg-white/10', divider: 'bg-[#17191c]/10 dark:bg-white/10' },
+  satire:     { bg: 'bg-[#f7f7f8] dark:bg-[#1e2025]',    textColor: 'text-[#777b86] dark:text-[#8a8e99]', iconBg: 'bg-white dark:bg-white/10',    divider: 'bg-[#a3a6af]/20 dark:bg-white/08' },
+};
+
 export default function VerdictCard({ verdict, confidence, summary }: VerdictCardProps) {
   const display = VERDICT_MAP[verdict];
+  const style   = verdictStyles[verdict] || verdictStyles.unverified;
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.5, type: 'spring', damping: 18 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, type: 'spring', damping: 20 }}
       className="w-full"
     >
-      <div className={`relative overflow-hidden rounded-2xl border-2 ${display.borderColor}`}>
-        {/* Opaque base so the animated page background doesn't show through */}
-        <div className="absolute inset-0 bg-[#0d1018]/95" />
-        {/* Gradient tint */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${display.gradientFrom} ${display.gradientTo}`} />
-
-        {/* Animated glow orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ x: [0, 40, 0], y: [0, -30, 0], scale: [1, 1.3, 1] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-            className={`absolute -top-24 -right-24 w-72 h-72 ${display.bgColor} rounded-full blur-3xl opacity-40`}
-          />
-          <motion.div
-            animate={{ x: [0, -25, 0], y: [0, 20, 0], scale: [1, 1.2, 1] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-            className={`absolute -bottom-16 -left-16 w-52 h-52 ${display.bgColor} rounded-full blur-3xl opacity-25`}
-          />
+      <div
+        className={`rounded-[24px] ${style.bg} p-6 md:p-8`}
+        style={{ boxShadow: 'var(--shadow-card)' }}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="min-w-0">
+            <p className="text-[12px] font-[500] tracking-[0.06em] uppercase mb-2 text-[#777b86] dark:text-[#52565e]">Verdict</p>
+            <h2 className={`font-display text-[40px] leading-[1.05] tracking-[-0.66px] ${style.textColor}`}>
+              {display.label}
+            </h2>
+            <p className={`text-[15px] tracking-[-0.009em] mt-1.5 leading-[1.4] opacity-70 ${style.textColor}`}>
+              {display.description}
+            </p>
+          </div>
+          <div
+            className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center mt-1 ${style.iconBg}`}
+            style={{ boxShadow: 'var(--shadow-badge)' }}
+          >
+            <VerdictIcon iconName={display.iconName} className={`w-5 h-5 ${style.textColor}`} />
+          </div>
         </div>
 
-        <div className="relative p-6 md:p-8">
-          {/* Main Verdict Badge — big and centred */}
-          <div className="flex flex-col items-center mb-8">
-            {/* Icon circle */}
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.15, type: 'spring', damping: 12, stiffness: 120 }}
-              className={`w-20 h-20 rounded-full ${display.bgColor} border-2 ${display.borderColor} flex items-center justify-center mb-4 shadow-2xl`}
-            >
-              <span className="text-4xl">{display.icon}</span>
-            </motion.div>
+        {/* Confidence */}
+        <div className="mb-6">
+          <ConfidenceMeter score={confidence} verdict={verdict} />
+        </div>
 
-            {/* Verdict label */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-center"
-            >
-              <h2 className={`text-4xl md:text-5xl font-black tracking-widest ${display.color} mb-2`}>
-                {display.label}
-              </h2>
-              <p className={`text-base font-medium ${display.color} opacity-80`}>
-                {display.description}
-              </p>
-            </motion.div>
-          </div>
+        {/* Divider */}
+        <div className={`h-px mb-6 ${style.divider}`} />
 
-          {/* Divider */}
-          <div className={`h-px w-full ${display.bgColor} mb-6 opacity-50`} />
+        {/* Summary */}
+        <div>
+          <p className="text-[12px] font-[500] tracking-[0.06em] uppercase mb-3 text-[#777b86] dark:text-[#52565e]">Analysis Summary</p>
+          <p className={`text-[15px] leading-[1.6] tracking-[-0.009em] ${style.textColor}`}>
+            {summary}
+          </p>
+        </div>
 
-          {/* Confidence Meter */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mb-6"
-          >
-            <ConfidenceMeter score={confidence} verdict={verdict} />
-          </motion.div>
-
-          {/* Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white/[0.08] backdrop-blur-md rounded-2xl p-6 border border-white/20"
-          >
-            <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-300 inline-block" />
-              Analysis Summary
-            </h3>
-            <p className="text-white leading-relaxed text-base">
-              {summary}
-            </p>
-          </motion.div>
-
-          {/* Disclaimer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-300"
-          >
-            <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-            <span>AI-assisted analysis. Always verify important information yourself.</span>
-          </motion.div>
+        {/* Disclaimer */}
+        <div className="mt-6 flex items-center gap-1.5 text-[12px] tracking-[-0.009em] text-[#a3a6af] dark:text-[#52565e]">
+          <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+          <span>AI-assisted analysis. Always verify important information yourself.</span>
         </div>
       </div>
     </motion.div>

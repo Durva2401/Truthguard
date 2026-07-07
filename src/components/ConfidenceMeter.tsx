@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import type { Verdict } from '@/types';
-import { VERDICT_MAP } from '@/types';
 
 interface ConfidenceMeterProps {
   score: number;
@@ -10,82 +9,42 @@ interface ConfidenceMeterProps {
 }
 
 export default function ConfidenceMeter({ score, verdict }: ConfidenceMeterProps) {
-  const display = VERDICT_MAP[verdict];
+  const isWarm = ['false', 'misleading'].includes(verdict);
+  const isCool = ['true', 'too_recent'].includes(verdict);
 
-  // Get the gradient color based on verdict
-  const getGradient = () => {
-    switch (verdict) {
-      case 'true':
-        return 'from-emerald-500 to-emerald-400';
-      case 'false':
-        return 'from-red-500 to-red-400';
-      case 'misleading':
-        return 'from-amber-500 to-amber-400';
-      case 'unverified':
-        return 'from-gray-500 to-gray-400';
-      case 'too_recent':
-        return 'from-blue-500 to-blue-400';
-      case 'satire':
-        return 'from-purple-500 to-purple-400';
-      default:
-        return 'from-gray-500 to-gray-400';
-    }
-  };
-
-  const getGlowColor = () => {
-    switch (verdict) {
-      case 'true':
-        return 'shadow-emerald-500/30';
-      case 'false':
-        return 'shadow-red-500/30';
-      case 'misleading':
-        return 'shadow-amber-500/30';
-      case 'unverified':
-        return 'shadow-gray-500/30';
-      case 'too_recent':
-        return 'shadow-blue-500/30';
-      case 'satire':
-        return 'shadow-purple-500/30';
-      default:
-        return 'shadow-gray-500/30';
-    }
-  };
+  // Use CSS vars so colors adapt in dark mode automatically
+  const barColor   = isWarm ? 'var(--color-rust)'      : isCool ? 'var(--color-ink)'      : 'var(--color-graphite)';
+  const trackColor = isWarm ? 'rgba(93,42,26,0.12)'    : isCool ? 'rgba(23,25,28,0.08)'   : 'rgba(119,123,134,0.12)';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-400">Confidence Score</span>
+        <span className="text-[13px] font-[500] tracking-[-0.009em] text-[#777b86] dark:text-[#8a8e99]">
+          Confidence Score
+        </span>
         <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className={`text-2xl font-bold ${display.color}`}
+          transition={{ delay: 0.4 }}
+          className="text-[22px] font-[500] tracking-[-0.009em]"
+          style={{ color: barColor }}
         >
           {score}%
         </motion.span>
       </div>
 
-      <div className="relative h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+      <div className="relative h-2 rounded-full overflow-hidden" style={{ background: trackColor }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
-          transition={{ duration: 1.5, delay: 0.3, ease: 'easeOut' }}
-          className={`absolute inset-y-0 left-0 bg-gradient-to-r ${getGradient()} rounded-full shadow-lg ${getGlowColor()}`}
-        >
-          {/* Shimmer effect */}
-          <motion.div
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ duration: 2, repeat: Infinity, delay: 2 }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          />
-        </motion.div>
+          transition={{ duration: 1.2, delay: 0.2, ease: 'easeOut' }}
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ background: barColor }}
+        />
       </div>
 
-      {/* Confidence level label */}
-      <div className="flex justify-between text-xs text-gray-500">
-        <span>Low</span>
-        <span>Medium</span>
-        <span>High</span>
+      <div className="flex justify-between text-[12px] tracking-[-0.009em] text-[#a3a6af] dark:text-[#52565e]">
+        <span>Low</span><span>Medium</span><span>High</span>
       </div>
     </div>
   );
