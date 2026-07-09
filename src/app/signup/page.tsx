@@ -50,7 +50,8 @@ export default function SignupPage() {
         throw new Error(data.error || 'Sign up failed');
       }
       await refresh();
-      router.push('/');
+      const from = new URLSearchParams(window.location.search).get('from');
+      router.push(from && from.startsWith('/') ? from : '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
